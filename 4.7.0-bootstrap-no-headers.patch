@@ -1,0 +1,30 @@
+--- origsrc/gcc-4.7.0/gcc/configure	2012-03-08 07:54:54.000000000 -0600
++++ src/gcc-4.7.0/gcc/configure	2012-06-12 20:55:08.991107400 -0500
+@@ -11832,9 +11832,9 @@ fi
+ # This prevents libgcc2 from containing any code which requires libc
+ # support.
+ : ${inhibit_libc=false}
+-if { { test x$host != x$target && test "x$with_sysroot" = x ; } ||
+-       test x$with_newlib = xyes ; } &&
+-     { test "x$with_headers" = x || test "x$with_headers" = xno ; } ; then
++if { test x$host != x$target || test x$with_newlib = xyes ; } &&
++     { { test "x$with_headers" = x && test "x$with_sysroot" = x ; } ||
++       test "x$with_headers" = xno ; } ; then
+        inhibit_libc=true
+ fi
+ 
+--- origsrc/gcc-4.7.0/gcc/configure.ac	2012-03-08 07:54:54.000000000 -0600
++++ src/gcc-4.7.0/gcc/configure.ac	2012-06-12 20:54:15.526318200 -0500
+@@ -1843,9 +1843,9 @@ fi
+ # This prevents libgcc2 from containing any code which requires libc
+ # support.
+ : ${inhibit_libc=false}
+-if { { test x$host != x$target && test "x$with_sysroot" = x ; } ||
+-       test x$with_newlib = xyes ; } &&
+-     { test "x$with_headers" = x || test "x$with_headers" = xno ; } ; then
++if { test x$host != x$target || test x$with_newlib = xyes ; } &&
++     { { test "x$with_headers" = x && test "x$with_sysroot" = x ; } ||
++       test "x$with_headers" = xno ; } ; then
+        inhibit_libc=true
+ fi
+ AC_SUBST(inhibit_libc)
