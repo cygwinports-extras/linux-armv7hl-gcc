@@ -1,6 +1,0 @@
-category: Devel
-requires: linux-armv7hl-gcc-core linux-armv7hl-gcc-g++ linux-armv7hl-gcc-ada linux-armv7hl-gcc-fortran linux-armv7hl-gcc-objc
-sdesc: "GCC for Linux armv7hl toolchain (meta-package)"
-ldesc: "The GNU Compiler Collection includes front ends for C, C++, 
-Objective-C, Fortran, Java, and Ada, as well as libraries for these 
-languages (libstdc++, libgcj,...)."
