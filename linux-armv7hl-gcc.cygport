@@ -2,7 +2,7 @@ TOOLCHAIN_TARGET="armv7hl-unknown-linux-gnueabi"
 inherit toolchain
 
 NAME="linux-armv7hl-gcc"
-VERSION=4.7.2
+VERSION=4.8.2
 RELEASE=1
 CATEGORY="Devel"
 SUMMARY="GCC for Linux armv7hl toolchain"
@@ -12,24 +12,30 @@ Objective-C, Fortran, Java, and Ada, as well as libraries for these languages
 GNU/Linux ARM hard-float platform (armv7hl-unknown-linux-gnu)."
 HOMEPAGE="http://gcc.gnu.org/"
 
-case ${#PV[3]} in
-8)	snapshot_v="${PV[1]}.${PV[2]}-${PV[3]}"
-	SRC_URI="mirror://gcc/snapshots/${snapshot_v}/gcc-${snapshot_v}.tar.bz2"
-	SRC_DIR="gcc-${snapshot_v}"
+case ${VERSION} in
+*.*-20[1-9][0-9][01][0-9][0-3][0-9])
+	SRC_URI="mirror://gcc/snapshots/${VERSION}/gcc-${VERSION}.tar.bz2"
 	;;
-*)	SRC_URI="mirror://gnu/gcc/gcc-${PV}/gcc-${PV}.tar.bz2"
-	SRC_DIR="gcc-${PV}"
+*)	SRC_URI="mirror://gnu/gcc/gcc-${VERSION}/gcc-${VERSION}.tar.bz2"
 	;;
 esac
-SRC_DIR="gcc-${PV}"
+SRC_DIR="gcc-${VERSION}"
 
 PATCH_URI="
-	config-rpath.patch
 	4.7.0-cross-datadir.patch
 	4.7.0-cross-ecjx.patch
+	4.7-libffi-noinst.patch
+	4.8-lto-plugin-soname.patch
+	4.6-textdomain.patch
+	4.8-Wimplicit-decls.patch
+	4.8-cygwin64.patch
 "
 
-PKG_NAMES="${PN}-core ${PN}-g++ ${PN}-fortran ${PN}-go ${PN}-java ${PN}-objc ${PN}-objc++"
+PKG_NAMES="${NAME}-core ${NAME}-g++ ${NAME}-fortran ${NAME}-go ${NAME}-objc ${NAME}-objc++"
+if defined ARCH_i686
+then
+	PKG_NAMES+=" ${NAME}-ada ${NAME}-java"
+fi
 linux_armv7hl_gcc_core_REQUIRES="linux-armv7hl-binutils"
 linux_armv7hl_gcc_core_SUMMARY="${SUMMARY} (C, OpenMP)"
 linux_armv7hl_gcc_core_CONTENTS="
@@ -41,10 +47,11 @@ linux_armv7hl_gcc_core_CONTENTS="
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION}/cc1.exe
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION}/collect2.exe
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION}/crt*.o
-	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION}/cyglto_plugin-0.dll
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION}/cyglto_plugin.dll
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION}/include-fixed/
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION}/include/
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION}/install-tools/
+	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION}/libatomic*
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION}/libgcc*
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION}/libgcov.*
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION}/libgomp.*
@@ -53,6 +60,7 @@ linux_armv7hl_gcc_core_CONTENTS="
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION}/libssp*
 	usr/lib/gcc/${TOOLCHAIN_TARGET}/${VERSION}/lto*.exe
 	usr/share/doc/
+	usr/share/locale/
 	usr/share/man/man1/${TOOLCHAIN_TARGET}-cpp.1*
 	usr/share/man/man1/${TOOLCHAIN_TARGET}-gcc.1*
 	usr/share/man/man1/${TOOLCHAIN_TARGET}-gcov.1*
@@ -128,12 +136,26 @@ linux_armv7hl_gcc_objc___CONTENTS="
 DEPS_PATH="${TOOLCHAIN_SYSROOT}/usr/lib"
 
 CYGCONF_ARGS="
-	--disable-multilib
-	--enable-languages=c,c++,fortran,go,java,lto,objc,obj-c++
+	--libexecdir=/usr/lib
+	--enable-shared --enable-shared-libgcc --enable-static
+	--enable-languages=c,c++,fortran,${ARCH_i686+ada,java,}go,lto,objc,obj-c++
 	--enable-version-specific-runtime-libs
 	--disable-alsa
+	--disable-multilib
+	${ARCH_i686+--enable-libada}
+	--enable-libgomp
+	--enable-libitm
+	${ARCH_i686+--enable-libjava}
+	--enable-libquadmath
+	--enable-libquadmath-support
+	--enable-libssp
+	--enable-default-preferences-peer=file
+	--disable-java-awt
+	--disable-jni
 	--with-dwarf2
 	--with-ecj-jar=/usr/share/java/ecj.jar
+	--with-gnu-as --with-gnu-ld
+	--with-cloog-include=/usr/include/cloog-isl
 	--with-system-zlib
 	--with-arch=armv7-a --with-cpu=cortex-a8 --with-tune=cortex-a8
 	--with-float=hard --with-fpu=vfpv3-d16 --with-abi=aapcs-linux
@@ -153,7 +175,7 @@ src_install() {
 	mv ${D}/usr/lib/pkgconfig/* ${D}${TOOLCHAIN_SYSROOT}/usr/lib/pkgconfig/
 
 	# conflicts with native gcc
-	rm -fr ${D}/usr/share/{info,locale,man/man7}
+	rm -fr ${D}/usr/share/{info,man/man7}
 }
 
 KEEP_LA_FILES="none"
